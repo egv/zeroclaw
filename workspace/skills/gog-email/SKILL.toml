@@ -40,8 +40,8 @@ kind = "shell"
 command = "sh"
 args = ["-c", "GOG_KEYRING_PASSWORD=my-secret-password gog gmail thread modify \"${thread_id}\" --remove-label UNREAD -j --results-only"]
 
-[[prompts]]
-prompt = """
+prompts = [
+  """
 You have access to Gmail via the gog CLI tool. Use these email tools when:
 
 - User asks about emails, messages, inbox, or mail
@@ -82,3 +82,4 @@ Important:
 - Thread IDs can be used with email_mark_read
 - Never send sensitive info without explicit approval
 """
+]
