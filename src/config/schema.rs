@@ -1850,11 +1850,11 @@ impl Default for BuiltinHooksConfig {
 ///
 /// Controls what the agent is allowed to do: shell commands, filesystem access,
 /// risk approval gates, and per-policy budgets.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 fn default_autonomy_level() -> AutonomyLevel {
     AutonomyLevel::Supervised
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct AutonomyConfig {
     /// Autonomy level: `read_only`, `supervised` (default), or `full`.
     #[serde(default = "default_autonomy_level")]
