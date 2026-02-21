@@ -1854,6 +1854,14 @@ fn default_autonomy_level() -> AutonomyLevel {
     AutonomyLevel::Supervised
 }
 
+fn default_max_actions_per_hour() -> u32 {
+    100
+}
+
+fn default_max_cost_per_day_cents() -> u32 {
+    1000
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct AutonomyConfig {
     /// Autonomy level: `read_only`, `supervised` (default), or `full`.
@@ -1870,10 +1878,10 @@ pub struct AutonomyConfig {
     #[serde(default)]
     pub forbidden_paths: Vec<String>,
     /// Maximum actions allowed per hour per policy. Default: `100`.
-    #[serde(default)]
+    #[serde(default = "default_max_actions_per_hour")]
     pub max_actions_per_hour: u32,
     /// Maximum cost per day in cents per policy. Default: `1000`.
-    #[serde(default)]
+    #[serde(default = "default_max_cost_per_day_cents")]
     pub max_cost_per_day_cents: u32,
 
     /// Require explicit approval for medium-risk shell commands.
