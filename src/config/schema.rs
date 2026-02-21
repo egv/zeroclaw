@@ -1851,19 +1851,29 @@ impl Default for BuiltinHooksConfig {
 /// Controls what the agent is allowed to do: shell commands, filesystem access,
 /// risk approval gates, and per-policy budgets.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+fn default_autonomy_level() -> AutonomyLevel {
+    AutonomyLevel::Supervised
+}
+
 pub struct AutonomyConfig {
     /// Autonomy level: `read_only`, `supervised` (default), or `full`.
+    #[serde(default = "default_autonomy_level")]
     pub level: AutonomyLevel,
     /// Restrict absolute filesystem paths to workspace-relative references. Default: `true`.
     /// Resolved paths outside the workspace still require `allowed_roots`.
+    #[serde(default)]
     pub workspace_only: bool,
     /// Allowlist of executable names permitted for shell execution.
+    #[serde(default)]
     pub allowed_commands: Vec<String>,
     /// Explicit path denylist. Default includes system-critical paths and sensitive dotdirs.
+    #[serde(default)]
     pub forbidden_paths: Vec<String>,
     /// Maximum actions allowed per hour per policy. Default: `100`.
+    #[serde(default)]
     pub max_actions_per_hour: u32,
     /// Maximum cost per day in cents per policy. Default: `1000`.
+    #[serde(default)]
     pub max_cost_per_day_cents: u32,
 
     /// Require explicit approval for medium-risk shell commands.
