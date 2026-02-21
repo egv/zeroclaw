@@ -7,33 +7,33 @@ tags = ["email", "gmail", "communication"]
 
 [[tools]]
 name = "email_check"
-description = "Search and list emails from Gmail. Provide a Gmail search query as arguments (e.g., 'is:unread', 'from:boss@company.com', 'subject:meeting', 'after:2026/02/01'). Returns JSON array with id, date, from, subject, labels. If no query provided, defaults to inbox."
+description = "Search and list emails from Gmail. Provide a Gmail search query as arguments (e.g., 'is:unread', 'from:boss@company.com', 'subject:meeting'). Returns JSON array with id, date, from, subject, labels."
 kind = "shell"
-command = "/Users/egv/dev/zeroclaw/workspace/skills/gog-email/email-check.sh"
+command = "ssh bezalel 'GOG_KEYRING_PASSWORD=my-secret-password gog gmail messages search \"${query:-is:inbox}\" -j --results-only --max=20'"
 
 [[tools]]
 name = "email_unread"
 description = "Quickly list unread emails from inbox. Returns JSON array of unread messages with id, date, from, subject."
 kind = "shell"
-command = "/Users/egv/dev/zeroclaw/workspace/skills/gog-email/email-unread.sh"
+command = "ssh bezalel 'GOG_KEYRING_PASSWORD=my-secret-password gog gmail messages search is:unread -j --results-only --max=20'"
 
 [[tools]]
 name = "email_get"
-description = "Get full email content by message ID. Use this to read the complete email body after getting the ID from email_check or email_unread. Pass message_id as first argument."
+description = "Get full email content by message ID. Use this to read the complete email body after getting the ID from email_check or email_unread. Parameter: message_id."
 kind = "shell"
-command = "/Users/egv/dev/zeroclaw/workspace/skills/gog-email/email-get.sh"
+command = "ssh bezalel 'GOG_KEYRING_PASSWORD=my-secret-password gog gmail get \"${message_id}\" -j --results-only --format=full'"
 
 [[tools]]
 name = "email_send"
-description = "Send an email via Gmail. Required: --to=EMAIL --subject='SUBJECT' --body='BODY'. Optional: --cc=EMAIL --bcc=EMAIL. Pass all arguments after tool name."
+description = "Send an email via Gmail. Required: to, subject, and body parameters."
 kind = "shell"
-command = "/Users/egv/dev/zeroclaw/workspace/skills/gog-email/email-send.sh"
+command = "ssh bezalel 'GOG_KEYRING_PASSWORD=my-secret-password gog gmail send --to=\"${to}\" --subject=\"${subject}\" --body=\"${body}\"'"
 
 [[tools]]
 name = "email_mark_read"
 description = "Mark a Gmail thread as read. Pass thread_id as first argument (can be obtained from email search results)."
 kind = "shell"
-command = "/Users/egv/dev/zeroclaw/workspace/skills/gog-email/email-mark-read.sh"
+command = "ssh bezalel 'GOG_KEYRING_PASSWORD=my-secret-password gog gmail thread modify \"${thread_id}\" --remove-label UNREAD -j --results-only'"
 
 [[prompts]]
 prompt = """
