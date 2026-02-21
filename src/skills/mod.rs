@@ -73,7 +73,7 @@ fn default_version() -> String {
 
 /// Load all skills from the workspace skills directory
 pub fn load_skills(workspace_dir: &Path) -> Vec<Skill> {
-    load_skills_with_open_skills_config(workspace_dir, None, None)
+    load_skills_with_open_skills_config(workspace_dir, None, None, &[])
 }
 
 /// Load skills using runtime config values (preferred at runtime).
@@ -82,6 +82,7 @@ pub fn load_skills_with_config(workspace_dir: &Path, config: &crate::config::Con
         workspace_dir,
         Some(config.skills.open_skills_enabled),
         config.skills.open_skills_dir.as_deref(),
+        &config.skills.audit_skip_list,
     )
 }
 
@@ -89,25 +90,26 @@ fn load_skills_with_open_skills_config(
     workspace_dir: &Path,
     config_open_skills_enabled: Option<bool>,
     config_open_skills_dir: Option<&str>,
+    audit_skip_list: &[String],
 ) -> Vec<Skill> {
     let mut skills = Vec::new();
 
     if let Some(open_skills_dir) =
         ensure_open_skills_repo(config_open_skills_enabled, config_open_skills_dir)
     {
-        skills.extend(load_open_skills(&open_skills_dir));
+        skills.extend(load_open_skills(&open_skills_dir, audit_skip_list));
     }
 
-    skills.extend(load_workspace_skills(workspace_dir));
+    skills.extend(load_workspace_skills(workspace_dir, audit_skip_list));
     skills
 }
 
-fn load_workspace_skills(workspace_dir: &Path) -> Vec<Skill> {
+fn load_workspace_skills(workspace_dir: &Path, audit_skip_list: &[String]) -> Vec<Skill> {
     let skills_dir = workspace_dir.join("skills");
-    load_skills_from_directory(&skills_dir)
+    load_skills_from_directory(&skills_dir, audit_skip_list)
 }
 
-fn load_skills_from_directory(skills_dir: &Path) -> Vec<Skill> {
+fn load_skills_from_directory(skills_dir: &Path, audit_skip_list: &[String]) -> Vec<Skill> {
     if !skills_dir.exists() {
         return Vec::new();
     }
@@ -124,22 +126,33 @@ fn load_skills_from_directory(skills_dir: &Path) -> Vec<Skill> {
             continue;
         }
 
-        match audit::audit_skill_directory(&path) {
-            Ok(report) if report.is_clean() => {}
-            Ok(report) => {
-                tracing::warn!(
-                    "skipping insecure skill directory {}: {}",
-                    path.display(),
-                    report.summary()
-                );
-                continue;
-            }
-            Err(err) => {
-                tracing::warn!(
-                    "skipping unauditable skill directory {}: {err}",
-                    path.display()
-                );
-                continue;
+        // Check if this skill is in the audit skip list
+        let skill_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        let skip_audit = audit_skip_list.iter().any(|s| s == skill_name);
+
+        if skip_audit {
+            tracing::info!(
+                "Skipping security audit for whitelisted skill: {}",
+                skill_name
+            );
+        } else {
+            match audit::audit_skill_directory(&path) {
+                Ok(report) if report.is_clean() => {}
+                Ok(report) => {
+                    tracing::warn!(
+                        "skipping insecure skill directory {}: {}",
+                        path.display(),
+                        report.summary()
+                    );
+                    continue;
+                }
+                Err(err) => {
+                    tracing::warn!(
+                        "skipping unauditable skill directory {}: {err}",
+                        path.display()
+                    );
+                    continue;
+                }
             }
         }
 
@@ -161,13 +174,13 @@ fn load_skills_from_directory(skills_dir: &Path) -> Vec<Skill> {
     skills
 }
 
-fn load_open_skills(repo_dir: &Path) -> Vec<Skill> {
+fn load_open_skills(repo_dir: &Path, audit_skip_list: &[String]) -> Vec<Skill> {
     // Modern open-skills layout stores skill packages in `skills/<name>/SKILL.md`.
     // Prefer that structure to avoid treating repository docs (e.g. CONTRIBUTING.md)
     // as executable skills.
     let nested_skills_dir = repo_dir.join("skills");
     if nested_skills_dir.is_dir() {
-        return load_skills_from_directory(&nested_skills_dir);
+        return load_skills_from_directory(&nested_skills_dir, audit_skip_list);
     }
 
     let mut skills = Vec::new();

@@ -443,6 +443,10 @@ pub struct SkillsConfig {
     /// `full` preserves legacy behavior. `compact` keeps context small and loads skills on demand.
     #[serde(default)]
     pub prompt_injection_mode: SkillsPromptInjectionMode,
+    /// List of skill names to skip security audit for (whitelist).
+    /// Use with caution - only add skills you trust completely.
+    #[serde(default)]
+    pub audit_skip_list: Vec<String>,
 }
 
 impl Default for SkillsConfig {
@@ -451,6 +455,7 @@ impl Default for SkillsConfig {
             open_skills_enabled: false,
             open_skills_dir: None,
             prompt_injection_mode: SkillsPromptInjectionMode::default(),
+            audit_skip_list: Vec::new(),
         }
     }
 }
